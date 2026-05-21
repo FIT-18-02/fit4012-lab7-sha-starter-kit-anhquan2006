@@ -3,19 +3,24 @@
 
 #include <array>
 #include <cstdint>
+#include <string>
 
-using byte = std::uint8_t;
-using word = std::uint32_t;
+// Định nghĩa các kiểu dữ liệu cơ bản
+using byte = std::uint8_t;   // 8-bit (1 byte)
+using word = std::uint32_t;  // 32-bit (4 bytes - 1 word)
 
-// Initial hash values H(0): first 32 bits of the fractional parts
-// of the square roots of the first 8 prime numbers.
+// Cấu trúc bổ trợ để quản lý block dữ liệu trong SHA-256
+struct SHA256_Block {
+    std::array<byte, 64> bytes; // 1 Block SHA-256 tiêu chuẩn = 64 bytes (512 bits)
+};
+
+// Giá trị khởi tạo H(0): 32 bit đầu tiên của phần phân số từ căn bậc hai của 8 số nguyên tố đầu tiên.
 static constexpr std::array<word, 8> H0_INITIAL = {
     0x6a09e667U, 0xbb67ae85U, 0x3c6ef372U, 0xa54ff53aU,
     0x510e527fU, 0x9b05688cU, 0x1f83d9abU, 0x5be0cd19U
 };
 
-// Round constants K[0..63]: first 32 bits of the fractional parts
-// of the cube roots of the first 64 prime numbers.
+// Hằng số vòng K[0..63]: 32 bit đầu tiên của phần phân số từ căn bậc ba của 64 số nguyên tố đầu tiên.
 static constexpr std::array<word, 64> K256 = {
     0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U,
     0x3956c25bU, 0x59f111f1U, 0x923f82a4U, 0xab1c5ed5U,
@@ -35,22 +40,29 @@ static constexpr std::array<word, 64> K256 = {
     0x90befffaU, 0xa4506cebU, 0xbef9a3f7U, 0xc67178f2U
 };
 
+// --- Các hàm thao tác Bit chức năng cơ bản ---
+
+// Xoay phải (Rotate Right)
 inline word ROTR(word x, unsigned int n) {
     return (x >> n) | (x << (32U - n));
 }
 
+// Dịch phải (Shift Right)
 inline word SHR(word x, unsigned int n) {
     return x >> n;
 }
 
+// Hàm Choose: Nếu bit của x là 1 thì chọn y, ngược lại chọn z
 inline word Ch(word x, word y, word z) {
     return (x & y) ^ (~x & z);
 }
 
+// Hàm Majority: Trả về bit xuất hiện nhiều hơn (đa số) giữa x, y, z
 inline word Maj(word x, word y, word z) {
     return (x & y) ^ (x & z) ^ (y & z);
 }
 
+// Các hàm biến đổi Sigma lớn và nhỏ phục vụ cho các vòng lặp nén SHA-256
 inline word Sigma0_256(word x) {
     return ROTR(x, 2U) ^ ROTR(x, 13U) ^ ROTR(x, 22U);
 }
