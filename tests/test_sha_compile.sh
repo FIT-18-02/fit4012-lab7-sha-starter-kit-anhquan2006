@@ -5,7 +5,7 @@
 # -o pipefail: Giúp bắt lỗi chính xác trong các đường ống lệnh
 set -euo pipefail
 
-# --- GIAI ĐOẠN 1: Tiến hành biên dịch các file mã nguồn sang file thực thi ---
+# --- GIAI ĐOẠN 1: Tiến hành biên dịch các file mã nguồn sang file
 
 # Biên dịch chương trình thuật toán lõi SHA-256
 g++ -std=c++17 -Wall -Wextra -pedantic sha_procedure.cpp -o sha256
