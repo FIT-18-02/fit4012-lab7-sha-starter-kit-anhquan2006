@@ -15,13 +15,55 @@ void print_usage(const char* program_name) {
 }
 
 std::string choose_file(int argc, char* argv[]) {
-    return (argc >= 4) ? std::string(argv[3]) : std::string(DEFAULT_PASSWORD_FILE);
+
+    if (argc >= 4) {
+        return std::string(argv[3]);
+    }
+
+    return std::string(DEFAULT_PASSWORD_FILE);
+}
+
+bool save_password_hash(const std::string& password,
+                        const std::string& password_file) {
+
+    std::ofstream output(password_file, std::ios::out);
+
+    if (!output.is_open()) {
+        return false;
+    }
+
+    const std::string hash =
+        sha256::calculate_sha256_string(password);
+
+    output << hash;
+
+    return true;
+}
+
+bool verify_password(const std::string& password,
+                     const std::string& password_file) {
+
+    std::ifstream input(password_file, std::ios::in);
+
+    if (!input.is_open()) {
+        return false;
+    }
+
+    std::string stored_hash;
+    std::getline(input, stored_hash);
+
+    const std::string current_hash =
+        sha256::calculate_sha256_string(password);
+
+    return (stored_hash == current_hash);
 }
 
 } // namespace
 
 int main(int argc, char* argv[]) {
+
     try {
+
         if (argc < 3 || argc > 4) {
             print_usage(argv[0]);
             return 1;
@@ -29,42 +71,63 @@ int main(int argc, char* argv[]) {
 
         const std::string mode = argv[1];
         const std::string password = argv[2];
-        const std::string password_file = choose_file(argc, argv);
+        const std::string password_file =
+            choose_file(argc, argv);
 
-        if (mode == "register") {
-            const std::string hash = sha256::calculate_sha256_string(password);
-            std::ofstream output(password_file);
-            if (!output) {
-                throw std::runtime_error("Cannot write password file: " + password_file);
-            }
-            output << hash << "\n";
-            std::cout << "[PASS] Password hash saved to " << password_file << "\n";
-            return 0;
-        }
-
-        if (mode == "login") {
-            std::ifstream input(password_file);
-            if (!input) {
-                throw std::runtime_error("Cannot read password file: " + password_file);
-            }
-
-            std::string stored_hash;
-            std::getline(input, stored_hash);
-            const std::string current_hash = sha256::calculate_sha256_string(password);
-
-            if (stored_hash == current_hash) {
-                std::cout << "[PASS] Login success\n";
-                return 0;
-            }
-
-            std::cout << "[FAIL] Login failed: wrong password\n";
+        if (password.empty()) {
+            std::cerr << "[ERROR] Empty password is not allowed\n";
             return 1;
         }
 
-        print_usage(argv[0]);
-        return 1;
+        // REGISTER
+        if (mode == "register") {
+
+            if (save_password_hash(password, password_file)) {
+
+                std::cout
+                    << "[PASS] Password registered successfully\n";
+
+                return 0;
+            }
+
+            std::cerr
+                << "[ERROR] Cannot write password file\n";
+
+            return 1;
+        }
+
+        // LOGIN
+        else if (mode == "login") {
+
+            if (verify_password(password, password_file)) {
+
+                std::cout
+                    << "[PASS] Login successful\n";
+
+                return 0;
+            }
+
+            std::cout
+                << "[FAIL] Invalid password\n";
+
+            return 1;
+        }
+
+        // INVALID MODE
+        else {
+
+            print_usage(argv[0]);
+            return 1;
+        }
+
     } catch (const std::exception& ex) {
-        std::cerr << "[ERROR] " << ex.what() << "\n";
+
+        std::cerr
+            << "[ERROR] "
+            << ex.what()
+            << std::endl;
+
         return 1;
     }
 }
+//vh
