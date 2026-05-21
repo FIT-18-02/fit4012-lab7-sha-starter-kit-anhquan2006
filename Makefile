@@ -1,27 +1,46 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -pedantic
+CXXFLAGS := -std=c++17 -Wall -Wextra -pedantic -O2
 
 SHA_TARGET := sha256
 FILE_TARGET := file_integrity
 PASS_TARGET := password_hash
 SALT_TARGET := salted_password_hash
 
-.PHONY: all clean run test hash-sample file-sample password-sample salted-sample
+TARGETS := $(SHA_TARGET) $(FILE_TARGET) $(PASS_TARGET) $(SALT_TARGET)
 
-all: $(SHA_TARGET) $(FILE_TARGET) $(PASS_TARGET) $(SALT_TARGET)
+.PHONY: all clean run test \
+        hash-sample file-sample \
+        password-sample salted-sample
 
+all: $(TARGETS)
+
+# =========================
+# SHA-256 MAIN PROGRAM
+# =========================
 $(SHA_TARGET): sha_procedure.cpp sha256_lib.h structure.h
-	$(CXX) $(CXXFLAGS) sha_procedure.cpp -o $(SHA_TARGET)
+	$(CXX) $(CXXFLAGS) $< -o $@
 
+# =========================
+# FILE INTEGRITY
+# =========================
 $(FILE_TARGET): file_integrity.cpp sha256_lib.h structure.h
-	$(CXX) $(CXXFLAGS) file_integrity.cpp -o $(FILE_TARGET)
+	$(CXX) $(CXXFLAGS) $< -o $@
 
+# =========================
+# PASSWORD HASH
+# =========================
 $(PASS_TARGET): password_hash.cpp sha256_lib.h structure.h
-	$(CXX) $(CXXFLAGS) password_hash.cpp -o $(PASS_TARGET)
+	$(CXX) $(CXXFLAGS) $< -o $@
 
+# =========================
+# SALTED PASSWORD HASH
+# =========================
 $(SALT_TARGET): salted_password_hash.cpp sha256_lib.h structure.h
-	$(CXX) $(CXXFLAGS) salted_password_hash.cpp -o $(SALT_TARGET)
+	$(CXX) $(CXXFLAGS) $< -o $@
 
+# =========================
+# SAMPLE RUNS
+# =========================
 run: all
 	bash scripts/run_sample.sh
 
@@ -41,6 +60,9 @@ salted-sample: $(SALT_TARGET)
 	./$(SALT_TARGET) register "fit4012-demo-password"
 	./$(SALT_TARGET) login "fit4012-demo-password"
 
+# =========================
+# TESTS
+# =========================
 test: all
 	bash tests/test_sha_compile.sh
 	bash tests/test_known_vectors.sh
@@ -48,7 +70,16 @@ test: all
 	bash tests/test_password_hash.sh
 	bash tests/test_salted_password.sh
 
+# =========================
+# CLEAN
+# =========================
 clean:
-	rm -f $(SHA_TARGET) $(FILE_TARGET) $(PASS_TARGET) $(SALT_TARGET)
-	rm -f sample.txt password.hash test_password.hash test_password_salted_1.hash test_password_salted_2.hash
+	rm -f $(TARGETS)
+	rm -f *.o
+	rm -f *.exe
+	rm -f sample.txt
+	rm -f password.hash
+	rm -f test_password.hash
+	rm -f test_password_salted_1.hash
+	rm -f test_password_salted_2.hash
 	rm -rf build
