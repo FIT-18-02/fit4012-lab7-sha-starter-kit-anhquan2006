@@ -13,7 +13,7 @@ echo "== 1. Known answer tests =="
 ./sha256 --self-test
 
 echo "== 2. Hash string =="
-# Thử nghiệm băm một chuỗi văn bản cụ thể để xem chuỗi hash hexa đầu ra
+# Thử nghiệm băm một chuỗi văn bản cụ thể để xem chuỗi hash hexa
 ./sha256 --hash-string "hello FIT4012 SHA"
 
 echo "== 3. File integrity =="
